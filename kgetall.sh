@@ -6,7 +6,7 @@ kgetall() {
   local headers_printed=false
 
   if [ ${#resource_types[@]} -eq 0 ]; then
-    kubectl api-resources --verbs=list --namespaced -o name  | xargs -n 1 kubectl get --namespace=argocd -o custom-columns=RESOURCE:.kind,NAME:.metadata.name,NAMESPACE:.metadata.namespace | awk '/RESOURCE/ && !header_printed {print; header_printed=1} !/RESOURCE/ && header_printed'
+    kubectl api-resources --verbs=list --namespaced -o name  | xargs -n 1 kubectl get --namespace="$namespace" -o custom-columns=RESOURCE:.kind,NAME:.metadata.name,NAMESPACE:.metadata.namespace | awk '/RESOURCE/ && !header_printed {print; header_printed=1} !/RESOURCE/ && header_printed'
 
   else
     for resource_type in "${resource_types[@]}"; do
