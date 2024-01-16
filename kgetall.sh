@@ -1,3 +1,4 @@
+#! /bin/bash
 kgetall() {
   local namespace="$1"
   shift
