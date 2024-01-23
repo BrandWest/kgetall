@@ -11,19 +11,24 @@ Server Version: v1.28.5+k3s1
 ## Usage
 Best used when added to an alias. 
 1. Clone the repository or download the script.
-2. Save the script into your desired folder `/home/<user>/kgetall.sh`
-3. Edit your desired .bashrc, .profile, etc. file and add `source /home/<user>/kgetall.sh`
+2. Save the script into your desired folder `/home/<user>/kube_scripts.sh`
+3. Edit your desired .bashrc, .profile, etc. file and add `source /home/<user>/kube_scripts.sh`
 4. Reload your current terminal.
 
 ### Exmaples
+These examples work assuming you made an alias that points to the script, otherwise you have to run it direclty using ./kube_scripts.sh <function> <arguments>
+
 Get all api-resources which returns a list of all resources available within an environment. 
 1. Namespace can be empty providing default or your current context, or have a specific namespace.
-`kgetall <namespace>`
+`kube_scripts kgetall <namespace>`
+2. Get the usage of the script `kube_scripts usage`
+3. Kill all stuck terminating namespaces `kube_scripts ktermns <namespace>`
+4. Exec a specific pod `kube_scripts kexec <pod name> <namespace> <shell> (optional)<container>` 
 
 Get a specific namespaces specific rsources. Returning a list of the resources specified for that namespace. 
 1. Namespace can be empty providing default or your current context, or have a specific namespace.
 2. Resources can be anything including certificates, pods, etc.
-`kgetall <namespace> <resource1> <resource2>`
+`kube_scripts kgetall <namespace> <resource1> <resource2>`
 
 ## Changes
 Feel free to change the custom-columns to what you want. I didn't need to have the ips and such so I left them out.
