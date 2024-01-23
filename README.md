@@ -18,9 +18,9 @@ Best used when added to an alias.
 ### Exmaples
 These examples work assuming you made an alias that points to the script, otherwise you have to run it direclty using ./kube_scripts.sh <function> <arguments>
 
-Get all api-resources which returns a list of all resources available within an environment. 
-1. Namespace can be empty providing default or your current context, or have a specific namespace.
-`kube_scripts kgetall <namespace>`
+
+1. Get all api-resources which returns a list of all resources available within an environment. 
+`kube_scripts kgetall (optional)<namespace> <resource1> <resource2> ... <resource n>`
 2. Get the usage of the script `kube_scripts usage`
 3. Kill all stuck terminating namespaces `kube_scripts ktermns <namespace>`
 4. Exec a specific pod `kube_scripts kexec <pod name> <namespace> <shell> (optional)<container>` 
