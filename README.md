@@ -1,5 +1,8 @@
 # kgetall
-Used to get all, or a subset of api-resources across a k8s cluster.
+A bash script with performs the following:
+  - kinfo: Get all info for a specific namespace
+  - kexec: perform a specific exec function
+  - kterm: terminate the specific namespace hanging resources
 
 ## Requirements
 Only tested on a Ubuntu 22.04.3 LTS, should work with any linux distro as long as `kubectl`, `xargs`, `awk`, `grep`, and `shift` are all installed.
@@ -20,10 +23,14 @@ These examples work assuming you made an alias that points to the script, otherw
 
 
 1. Get all api-resources which returns a list of all resources available within an environment. 
-`kube_scripts kgetall (optional)<namespace> <resource1> <resource2> ... <resource n>`
-2. Get the usage of the script `kube_scripts usage`
-3. Kill all stuck terminating namespaces `kube_scripts ktermns <namespace>`
-4. Exec a specific pod `kube_scripts kexec <pod name> <namespace> <shell> (optional)<container>` 
+`kube_scripts -a kinfo <namespace> (optional) <resource1> <resource2> ... <resource n>`
+  - kgetall -a kinfo -n authentik-dev
+2. Get the usage of the script `kube_scripts -a usage`
+  - 
+3. Kill all stuck terminating namespaces `kube_scripts -a kterms <namespace>`
+  - kgetall -a kterm -n authentik-dev
+4. Exec a specific pod `kube_scripts -a kexec -n namespace -p pod -d command (OPTIONAL: -c containerName, -s selector, -l shell)` 
+  - getall -a kexec -d env -n authentik-dev -p authentik-deployment-dev-v1-6cb4dcd7ff-ddbhv -h /bin/sh
 
 Get a specific namespaces specific rsources. Returning a list of the resources specified for that namespace. 
 1. Namespace can be empty providing default or your current context, or have a specific namespace.
