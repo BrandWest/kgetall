@@ -24,13 +24,12 @@ These examples work assuming you made an alias that points to the script, otherw
 
 1. Get all api-resources which returns a list of all resources available within an environment. 
 `kube_scripts -a kinfo <namespace> (optional) <resource1> <resource2> ... <resource n>`
-  - kgetall -a kinfo -n authentik-dev
+  - `kgetall -a kinfo -n authentik-dev`
 2. Get the usage of the script `kube_scripts -a usage`
-  - 
 3. Kill all stuck terminating namespaces `kube_scripts -a kterms <namespace>`
-  - kgetall -a kterm -n authentik-dev
+  - `kgetall -a kterm -n authentik-dev`
 4. Exec a specific pod `kube_scripts -a kexec -n namespace -p pod -d command (OPTIONAL: -c containerName, -s selector, -l shell)` 
-  - getall -a kexec -d env -n authentik-dev -p authentik-deployment-dev-v1-6cb4dcd7ff-ddbhv -h /bin/sh
+  - `kgetall -a kexec -d env -n authentik-dev -p authentik-deployment-dev-v1-6cb4dcd7ff-ddbhv -h /bin/sh`
 
 Get a specific namespaces specific rsources. Returning a list of the resources specified for that namespace. 
 1. Namespace can be empty providing default or your current context, or have a specific namespace.
