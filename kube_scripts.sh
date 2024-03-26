@@ -1,10 +1,13 @@
 #! /bin/bash
-kgetall() {
-  if [ -z "$1" ]; then
+# set -x
+
+kinfo() {
+  local namespace=$1
+  echo $namespace
+  if [ -z $namespace ]; then
     printf 'This command requires 1 argument. (NS)\n'
     usage
   fi  
-  local namespace="$1"
   shift
   local resource_types=("$@")
   local headers_printed=false
@@ -26,50 +29,135 @@ kgetall() {
 
 #Will not work if not in Terminiating state
 ktermns(){
+  local namespace=$1
+
   if [ -z "$1" ]; then
     printf 'This command requires 1 argument (NS)\n'
     usage
   fi  
-  kubectl get namespace "$1" -o json | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" \ | kubectl replace --raw /api/v1/namespaces/$1/finalize -f -
+  kubectl get namespace "$namespace" -o json | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" \ | kubectl replace --raw /api/v1/namespaces/$namespace/finalize -f -
 }
 
 #Performs exec on specific pod, option for specific container
-function kexec() {
-    if [ -z "$1" ]; then
-      printf 'This command requires at least 3 arguments (POD NS SHELL)\n'
-      usage
-    elif [ "$#" -lt  3 ]; then
-      echo "$0 $1 $2 $3 $4 $#"
-      printf 'This command requires at least 3 arguments (POD NS SHELL)\n'
-      usage
-    fi
+kexec() {
+    # 
+  local command=$1 
+  local container=$2
+  local originalPodName=$3
+  local selector=$4
+  local namespace=$5    
+  local shell=$6
 
-    if [ "$#" -eq "3" ]; then
-      kubectl exec -it pod/"$1"  -n "$2" -- $3
-    else
-      kubectl exec -it pod/"$1" -c $4 -n "$2" -- $3
-    fi
+
+  if [ -z "$1" ]; then
+    printf 'This command requires at least 3 arguments (POD NS command optional: container, selector, shell)\n'
+    usage
+  elif [ "$#" -lt  3 ]; then
+    printf 'This command requires at least 3 arguments (POD NS command, optional: container, selector, shell)\n'
+    usage
+  fi
+
+
+  if [[ $originalPodName != *"pod/"* ]]; then
+    podName="pod/$originalPodName"
+  fi
+
+  if [ -z $shell ]; then
+    shell=/bin/sh
+  fi
+
+  if [[ -z $selector ]] && [[  -z $container ]]; then
+    kubectl exec -it "$podName"  --namespace $namespace -- $shell -c "$command"
+  elif [[ -z $selector ]]; then
+    kubectl exec -it $podName --container $container -n $namespace -- $shell -c "$command"
+  else
+    pod=$(kubectl get pod -l app="$selector" -n $namespace -o jsonpath="{.items[0].metadata.name}")
+    kubectl exec $pod --container $container -n $namespace -- $shell -c "$command"
+  fi
 }
 
 #Prints help info
 usage(){
-  printf 'To use pick from the following functions. Please note, arguement order matters: \n'
-  printf '\tkgetall\t-\tGet all resources from the functions within the specified namespace.\tArguments: Namespace\n'
-  printf '\tktermns\t-\tTerminate a namespace from stuck "TERMINIATING" status.\t\t\tArguments: Namespace\n'
-  printf '\tkexec\t-\tRun an exec shell in a specified pod.\t\t\t\t\tArguments: Namespace Pod Shell (OPTIONAL: Container)\n'
-  printf '\tusage\t-\tPrints this help screen.\n'
+  printf 'Usage:'
+  printf '\t-a\tSelect which function to use\n'
+  printf '\t\t\tkinfo\t- Get all resources from the functions within the specified namespace.\tArguments: Namespace\n'
+  printf '\t\t\tktermns\t- Terminate a namespace from stuck "TERMINIATING" status.\t\t\tArguments: Namespace\n'
+  printf '\t\t\tkexec\t- Run an exec shell in a specified pod.\t\t\t\t\tArguments: Namespace Pod Command (OPTIONAL: Container Name, Selector, Shell)\n'
+  printf '\t\t\tusage\t- Prints this help screen.\n'
+  printf '\t-c\tThe container name\n'
+  printf '\t-l\tSelect the shell (default: /bin/sh)\n'
+  printf '\t-n\tSelect the namespace\n'
+  printf '\t-p\tSelect the pod name\n'
+  printf '\t-s\tSelect the selector name (app only)\n'
+  printf '\n'
+  printf 'Examples:\n'
+  printf 'Use kexec with a command, namespace, pod name, and shell type:\n\tkgetall -a kexec -d env -n authentik-dev -p authentik-deployment-dev-v1-6cb4dcd7ff-ddbhv -h /bin/sh\n'
+  printf 'Use kinfo to get all resources in a ns:\n\tkgetall -a kinfo -n authentik-dev\n'
+  printf 'Use kterm to delete all hanging processes in a namespace:\n\tkgetall -a kterm -n authentik-dev'
   exit 1
 }
 
+while getopts "a:c:d:n:p:s:l:h:" opt; do
+  case $opt in
+    # echo $opt
+    a)
+        action="$OPTARG"
+        ;;
+    c)
+        container="$OPTARG"
+        ;;
+    d)
+        command="$OPTARG"
+        ;;
+    l)
+        shell="$OPTARG"
+        ;;
+    n)
+        namespace="$OPTARG"
+        ;;
+    p)
+        podName="$OPTARG"
+        ;;
+    s)
+        selector="$OPTARG"
+        ;;
+    h)
+        usage
+        ;;
+  esac
+done
 
-
-# Check if the function exists (bash specific)
-if declare -f "$1" > /dev/null
-then
-  # call arguments verbatim
-  "$@"
-else
-  # Show a helpful error
-  echo "'$1' is not a known function name" >&2
-  usage
+if [[ -z "$action" ]]; then
+  echo "Option -a is a requirement"
+elif [[ $action ]]; then
+  case $action in
+    "kinfo")
+      if [[ -z "$action" ]] || [[ -z "$namespace" ]]; then
+        printf "Options -a, -n, are mandatory for action kinfo\n\n"
+        usage
+      fi
+      $action "$namespace"
+      ;;
+    "kterm")
+      if [[ -z "$action" ]] || [[ -z "$namespace" ]]; then
+        printf "Options -a, -n, are mandatory for action kterm\n\n"
+        usage
+      fi      
+      $action "$namespace"
+      ;;
+    "kexec")
+      if [[ -z "$action" ]] || [[ -z "$podName" ]] || [[ -z "$namespace" ]]; then
+        printf "Options -a, -p, -n, are mandatory for action kexec\n\n"
+        usage
+      fi
+      $action "$command" "$container" "$podName" "$selector" "$namespace" "$shell"
+      ;;
+    "usage")
+      usage
+      ;;
+    *)
+      printf "Invalid option -a.\n"
+      usage
+      ;;
+  esac
 fi
